@@ -1,0 +1,23 @@
+[project]
+name = "mycoder-workspace"
+version = "0.1.0"
+description = "Interface locale utilisant un modèle Qwen Coder"
+requires-python = ">=3.12,<3.13"
+dependencies = []
+
+[tool.uv]
+package = false
+
+[tool.uv.workspace]
+members = [
+    "apps/worker",
+    "apps/front",
+    "apps/api",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8,<10",
+    "pytest-django>=4,<5",
+    "ruff>=0.12,<1",
+]

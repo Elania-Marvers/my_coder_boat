@@ -1,0 +1,12 @@
+[project]
+name = "local-qwen-front"
+version = "0.1.0"
+description = "Interface Django pour le modèle Qwen local"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "django>=5.2.16,<5.3",
+    "httpx>=0.28,<1",
+]
+
+[tool.uv]
+package = false
