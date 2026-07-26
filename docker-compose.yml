@@ -1,0 +1,39 @@
+services:
+  rabbitmq:
+    # Version RabbitMQ avec l'interface web de gestion.
+    image: rabbitmq:4.3.2-management
+
+    # Nom stable utilisé par RabbitMQ pour conserver ses données.
+    hostname: mycoder-rabbitmq
+    container_name: mycoder-rabbitmq
+
+    restart: unless-stopped
+
+    # Les deux ports restent accessibles uniquement depuis ton Mac.
+    ports:
+      - "127.0.0.1:5672:5672"
+      - "127.0.0.1:15672:15672"
+
+    # Compte demandé pour le développement local.
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+
+    # Monte la configuration locale et conserve les files RabbitMQ.
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+      - ./infra/rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+
+    # Vérifie que RabbitMQ est réellement prêt.
+    healthcheck:
+      test:
+        - CMD
+        - rabbitmq-diagnostics
+        - -q
+        - ping
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  rabbitmq_data:

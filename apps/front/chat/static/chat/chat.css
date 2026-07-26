@@ -563,3 +563,103 @@ button {
         display: none;
     }
 }
+
+/* Carte affichant l'état du ticket RabbitMQ. */
+.job-status {
+    max-width: 900px;
+    margin: 0 auto 12px;
+    padding: 14px 16px;
+
+    border:
+        1px solid
+        rgba(92, 168, 255, 0.28);
+
+    border-radius: 14px;
+
+    background:
+        rgba(92, 168, 255, 0.08);
+}
+
+
+/* Masque complètement les éléments utilisant hidden. */
+.job-status[hidden],
+.error-banner[hidden] {
+    display: none;
+}
+
+
+/* En-tête contenant le statut et l'identifiant. */
+.job-status__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+
+.job-status__header strong {
+    font-size: 13px;
+}
+
+
+.job-status__header code {
+    color: var(--text-soft);
+    font-size: 11px;
+}
+
+
+.job-status p {
+    margin: 8px 0 0;
+
+    color: var(--text-soft);
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+
+/* Conteneur de la barre de progression. */
+.job-status__progress {
+    overflow: hidden;
+
+    height: 5px;
+    margin-top: 12px;
+
+    border-radius: 999px;
+
+    background:
+        rgba(255, 255, 255, 0.08);
+}
+
+
+/* Barre affichant un pourcentage réel. */
+.job-status__progress-bar {
+    width: 0;
+    height: 100%;
+
+    border-radius: inherit;
+    background: var(--accent);
+
+    transition: width 250ms ease;
+}
+
+
+/* Animation utilisée lorsque la progression
+   exacte de Qwen est inconnue. */
+.job-status__progress-bar.is-indeterminate {
+    animation:
+        job-progress-indeterminate
+        1.1s ease-in-out infinite;
+}
+
+
+/* Déplace la barre de gauche à droite
+   sans prétendre afficher un pourcentage. */
+@keyframes job-progress-indeterminate {
+    0% {
+        transform: translateX(-140%);
+    }
+
+    100% {
+        transform: translateX(340%);
+    }
+}

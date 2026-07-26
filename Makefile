@@ -55,7 +55,12 @@ DUMP_FILE ?= .local/project_dump.txt
 .PHONY: dump
 .PHONY: tree
 .PHONY: clean
-
+.PHONY: worker
+.PHONY: rabbitmq-up
+.PHONY: rabbitmq-check
+.PHONY: rabbitmq-logs
+.PHONY: rabbitmq-down
+.PHONY: rabbitmq-reset
 
 # Prépare complètement le projet :
 # dépendances, structure Django, migrations et vérification du front.
@@ -177,16 +182,13 @@ qwen:
 	@ollama run "$(QWEN_MODEL)"
 
 
-# Démarre toute l'architecture locale :
-# 1. vérifie Ollama ;
-# 2. démarre FastAPI en arrière-plan ;
-# 3. attend que FastAPI soit disponible ;
-# 4. démarre Django au premier plan.
+# Démarre RabbitMQ, FastAPI, le worker et Django.
 #
-# Lorsque Django est arrêté avec Ctrl+C,
-# le processus FastAPI lancé ici est également arrêté.
+# Django reste au premier plan.
+# Ctrl+C arrête FastAPI et le worker.
 dev:
 	@set -e; \
+	$(MAKE) rabbitmq-up; \
 	$(MAKE) ollama-check; \
 	echo "Démarrage de FastAPI..."; \
 	uv run --project apps/api \
@@ -195,25 +197,23 @@ dev:
 		--host "$(API_HOST)" \
 		--port "$(API_PORT)" & \
 	API_PID=$$!; \
-	trap 'echo "Arrêt de FastAPI..."; kill "$$API_PID" 2>/dev/null || true' EXIT INT TERM; \
-	echo "Attente de la disponibilité de FastAPI..."; \
-	API_READY=0; \
+	echo "Démarrage du worker RabbitMQ..."; \
+	uv run --project apps/worker \
+		mycoder-worker & \
+	WORKER_PID=$$!; \
+	trap 'echo "Arrêt des processus..."; kill "$$API_PID" "$$WORKER_PID" 2>/dev/null || true' EXIT INT TERM; \
+	echo "Attente de FastAPI..."; \
 	for attempt in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do \
 		if curl \
 			--fail \
 			--silent \
 			"http://$(API_HOST):$(API_PORT)/health" \
 			>/dev/null 2>&1; then \
-			API_READY=1; \
 			break; \
 		fi; \
 		sleep 1; \
 	done; \
-	if [ "$$API_READY" -ne 1 ]; then \
-		echo "FastAPI n'a pas démarré correctement."; \
-		exit 1; \
-	fi; \
-	echo "FastAPI disponible sur http://$(API_HOST):$(API_PORT)."; \
+	$(MAKE) api-check >/dev/null; \
 	echo "Démarrage de Django sur http://$(FRONT_HOST):$(FRONT_PORT)..."; \
 	uv run --project apps/front \
 		python apps/front/manage.py runserver \
@@ -258,3 +258,46 @@ clean:
 		2>/dev/null || true
 	@rm -rf .pytest_cache
 	@rm -rf .ruff_cache
+
+# Démarre RabbitMQ dans Docker.
+rabbitmq-up:
+	@docker compose up -d rabbitmq
+	@$(MAKE) rabbitmq-check
+	@echo "RabbitMQ : http://127.0.0.1:15672"
+
+
+# Attend que RabbitMQ soit réellement prêt.
+rabbitmq-check:
+	@echo "Attente de RabbitMQ..."
+	@for attempt in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20; do \
+		if docker compose exec -T rabbitmq \
+			rabbitmq-diagnostics -q ping \
+			>/dev/null 2>&1; then \
+			echo "RabbitMQ disponible."; \
+			exit 0; \
+		fi; \
+		sleep 1; \
+	done; \
+	echo "RabbitMQ n'a pas démarré correctement."; \
+	exit 1
+
+
+# Affiche les logs RabbitMQ en direct.
+rabbitmq-logs:
+	@docker compose logs -f rabbitmq
+
+
+# Arrête RabbitMQ sans supprimer ses données.
+rabbitmq-down:
+	@docker compose down
+
+
+# Supprime RabbitMQ et toutes les files locales.
+rabbitmq-reset:
+	@docker compose down -v
+
+
+# Lance le worker dans un processus séparé.
+worker:
+	@uv run --project apps/worker \
+		mycoder-worker

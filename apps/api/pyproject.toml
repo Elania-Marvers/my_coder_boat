@@ -1,19 +1,16 @@
 [project]
 name = "local-qwen-api"
-version = "0.1.0"
+version = "0.2.0"
 description = "Future API FastAPI de coordination"
 requires-python = ">=3.12,<3.13"
 dependencies = [
+    "aio-pika>=9.5,<10",
     "fastapi>=0.115,<1",
-    "uvicorn[standard]>=0.30,<1",
     "pydantic>=2,<3",
     "pydantic-settings>=2,<3",
-    "local-qwen-worker",
+    "uvicorn[standard]>=0.30,<1",
 ]
 
 [tool.uv]
 package = false
-
-[tool.uv.sources]
-local-qwen-worker = { workspace = true }
 

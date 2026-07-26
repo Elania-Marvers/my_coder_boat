@@ -1,3 +1,26 @@
+# FICHIER :
+# pyproject.toml
+#
+# RÔLE GÉNÉRAL :
+# Configure le workspace Python MyCoder.
+#
+# Ce fichier centralise :
+#
+# - la version de Python ;
+# - les trois sous-projets uv ;
+# - les outils de développement ;
+# - la configuration globale de pytest.
+#
+# SOUS-PROJETS :
+# - apps/front  : interface Django
+# - apps/api    : API FastAPI
+# - apps/worker : worker RabbitMQ et Ollama
+#
+# PIPELINES :
+# - SETUP
+# - LINT
+# - TEST
+
 [project]
 name = "mycoder-workspace"
 version = "0.1.0"
@@ -5,9 +28,15 @@ description = "Interface locale utilisant un modèle Qwen Coder"
 requires-python = ">=3.12,<3.13"
 dependencies = []
 
+
+# Le workspace racine n'est pas lui-même
+# construit comme un paquet Python.
 [tool.uv]
 package = false
 
+
+# Déclare les trois projets Python gérés
+# ensemble par uv.
 [tool.uv.workspace]
 members = [
     "apps/worker",
@@ -15,9 +44,66 @@ members = [
     "apps/api",
 ]
 
+
+# Outils utilisés uniquement pendant
+# le développement et les validations.
 [dependency-groups]
 dev = [
     "pytest>=8,<10",
     "pytest-django>=4,<5",
     "ruff>=0.12,<1",
 ]
+
+
+# Configuration du lanceur de tests global.
+#
+# UTILISÉE PAR :
+# - Makefile::test
+# - commande uv run pytest
+#
+# Cette configuration permet à pytest de trouver :
+#
+# - config.settings dans apps/front ;
+# - app dans apps/api ;
+# - local_qwen_worker dans apps/worker/src.
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings"
+
+pythonpath = [
+    "apps/front",
+    "apps/api",
+    "apps/worker/src",
+]
+
+# Dossiers parcourus automatiquement
+# par la commande pytest.
+testpaths = [
+    "tests",
+    "apps/front/chat",
+]
+
+# Reconnaît les fichiers de tests classiques
+# ainsi que le fichier tests.py créé par Django.
+python_files = [
+    "test_*.py",
+    "tests.py",
+]
+
+python_classes = [
+    "Test*",
+    "*Tests",
+]
+
+python_functions = [
+    "test_*",
+]
+
+# -ra :
+# affiche un résumé des tests non standards.
+#
+# --strict-markers :
+# refuse les marqueurs pytest inconnus.
+#
+# --strict-config :
+# refuse les options pytest invalides.
+addopts = "-ra --strict-markers --strict-config"
