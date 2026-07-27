@@ -198,8 +198,7 @@ class RabbitMQBroker:
             return
 
         logger.info(
-            "Connexion à RabbitMQ sur %s.",
-            self.settings.rabbitmq_url,
+            "Connexion au broker RabbitMQ."
         )
 
         self.connection = (

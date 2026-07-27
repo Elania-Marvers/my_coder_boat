@@ -1,436 +1,458 @@
-{% load static %}
+{% load static chat_markdown %}
 <!doctype html>
 
 <html lang="fr">
 <head>
     <meta charset="utf-8">
-
+    
     <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1"
+    name="viewport"
+    content="width=device-width, initial-scale=1"
     >
-
+    
     <title>MyCoder Local</title>
-
+    
     <!--
-        RÔLE :
-        Affiche le favicon de l'application dans l'onglet du navigateur.
-
-        FICHIER SOURCE :
-        apps/front/chat/static/chat/favicon.svg
+    RÔLE :
+    Affiche le favicon de l'application dans l'onglet du navigateur.
+    
+    FICHIER SOURCE :
+    apps/front/chat/static/chat/favicon.svg
     -->
     <link
-        rel="icon"
-        type="image/svg+xml"
-        href="{% static 'chat/favicon.svg' %}"
+    rel="icon"
+    type="image/svg+xml"
+    href="{% static 'chat/favicon.svg' %}"
     >
-
+    
     <!--
-        RÔLE :
-        Charge tous les styles de la page de conversation.
-
-        FICHIER SOURCE :
-        apps/front/chat/static/chat/chat.css
+    RÔLE :
+    Charge tous les styles de la page de conversation.
+    
+    FICHIER SOURCE :
+    apps/front/chat/static/chat/chat.css
     -->
     <link
-        rel="stylesheet"
-        href="{% static 'chat/chat.css' %}"
+    rel="stylesheet"
+    href="{% static 'chat/chat.css' %}"
     >
-
+    
     <!--
-        RÔLE :
-        Charge les interactions AJAX, le suivi des jobs
-        et les comportements du formulaire.
-
-        FICHIER SOURCE :
-        apps/front/chat/static/chat/chat.js
-
-        PIPELINES :
-        - CHAT_JOB_CREATE
-        - CHAT_JOB_STATUS
-        - CHAT_JOB_COMPLETE
+    RÔLE :
+    Charge les interactions AJAX, le suivi des jobs
+    et les comportements du formulaire.
+    
+    FICHIER SOURCE :
+    apps/front/chat/static/chat/chat.js
+    
+    PIPELINES :
+    - CHAT_JOB_CREATE
+    - CHAT_JOB_STATUS
+    - CHAT_JOB_COMPLETE
     -->
     <script
-        src="{% static 'chat/chat.js' %}"
-        defer
+    src="{% static 'chat/chat.js' %}"
+    defer
     ></script>
 </head>
 
 <body>
     <!--
-        RÔLE :
-        Conteneur principal de l'application.
-
-        DONNÉE DJANGO :
-        active_job_status_url est fournie par :
-        apps/front/chat/views.py::index()
-
-        UTILISÉ PAR :
-        apps/front/chat/static/chat/chat.js::resumeActiveJob()
-
-        PIPELINE :
-        CHAT_JOB_STATUS
+    RÔLE :
+    Conteneur principal de l'application.
+    
+    DONNÉE DJANGO :
+    active_job_status_url est fournie par :
+    apps/front/chat/views.py::index()
+    
+    UTILISÉ PAR :
+    apps/front/chat/static/chat/chat.js::resumeActiveJob()
+    
+    PIPELINE :
+    CHAT_JOB_STATUS
     -->
     <div
-        class="app"
-        id="app-root"
-        data-active-job-status-url="{{ active_job_status_url }}"
+    class="app"
+    id="app-root"
+    data-active-job-status-url="{{ active_job_status_url }}"
     >
-        <!--
-            RÔLE :
-            Présente l'application, le modèle actif
-            et le pipeline réellement utilisé.
-        -->
-        <aside class="sidebar">
-            <div class="brand">
-                <div
-                    class="brand__logo"
-                    aria-hidden="true"
-                >
-                    ⚓
-                </div>
-
-                <div>
-                    <strong class="brand__title">
-                        MyCoder
-                    </strong>
-
-                    <span class="brand__subtitle">
-                        Assistant local
-                    </span>
-                </div>
-            </div>
-
-            <!--
-                RÔLE :
-                Affiche le modèle ayant produit
-                la dernière réponse réussie.
-
-                DONNÉE DJANGO :
-                model_name est fournie par :
-                apps/front/chat/views.py::index()
-            -->
-            <div class="status-card">
-                <div class="status-card__heading">
-                    <span class="status-dot"></span>
-
-                    Modèle actif
-                </div>
-
-                <code class="model-name">
-                    {{ model_name }}
-                </code>
-            </div>
-
-            <!--
-                RÔLE :
-                Explique le pipeline actuel de génération.
-
-                PIPELINE :
-                Django → FastAPI → RabbitMQ → Worker → Ollama
-            -->
-            <div class="sidebar__content">
-                <p>
-                    Django valide la conversation puis demande
-                    à FastAPI de créer un ticket.
-                </p>
-
-                <p>
-                    FastAPI publie le ticket dans RabbitMQ.
-                    Le worker traite une demande à la fois.
-                </p>
-
-                <p>
-                    Le navigateur suit l’état du ticket
-                    jusqu’à la réponse finale de Qwen.
-                </p>
-            </div>
-
-            <!--
-                RÔLE :
-                Efface l'historique et le job actif
-                conservés dans la session Django.
-
-                APPELLE :
-                apps/front/chat/views.py::clear_chat()
-
-                PIPELINE :
-                CHAT_CLEAR
-            -->
-            <form
-                method="post"
-                action="{% url 'chat:clear' %}"
-                class="clear-form"
+    <!--
+    RÔLE :
+    Présente l'application, le modèle actif
+    et le pipeline réellement utilisé.
+    -->
+    <aside class="sidebar">
+        <div class="brand">
+            <div
+            class="brand__logo"
+            aria-hidden="true"
             >
-                {% csrf_token %}
-
-                <button
-                    type="submit"
-                    class="secondary-button"
-                >
-                    Nouvelle conversation
-                </button>
-            </form>
-        </aside>
-
-        <!--
-            RÔLE :
-            Contient l'en-tête, l'historique
-            et le formulaire de conversation.
-        -->
-        <main class="main">
-            <header class="topbar">
-                <div>
-                    <h1>
-                        Conversation
-                    </h1>
-
-                    <p>
-                        Bateaux, histoire maritime et développement
-                    </p>
-                </div>
-
-                <span class="local-badge">
-                    RabbitMQ actif
-                </span>
-            </header>
-
-            <!--
-                RÔLE :
-                Affiche les messages stockés
-                dans la session Django.
-
-                DONNÉE DJANGO :
-                history est fournie par :
-                apps/front/chat/views.py::index()
-
-                PIPELINE :
-                CHAT_PAGE_DISPLAY
-            -->
-            <section
-                class="conversation"
-                id="conversation"
-                aria-live="polite"
-            >
-                <!--
-                    Affiche l'accueil uniquement lorsque
-                    l'historique est encore vide.
-                -->
-                {% if not history %}
-                    <div class="welcome">
-                        <div
-                            class="welcome__icon"
-                            aria-hidden="true"
-                        >
-                            ⛵
-                        </div>
-
-                        <h2>
-                            Bienvenue dans MyCoder
-                        </h2>
-
-                        <p>
-                            Chaque question devient un ticket RabbitMQ
-                            traité séparément par le worker Qwen.
-                        </p>
-
-                        <!--
-                            UTILISÉ PAR :
-                            apps/front/chat/static/chat/chat.js
-                            ::bindSuggestionButtons()
-                        -->
-                        <div class="suggestions">
-                            <button
-                                type="button"
-                                class="suggestion"
-                                data-question="Quelle est la différence entre une frégate et une corvette ?"
-                            >
-                                Frégate ou corvette ?
-                            </button>
-
-                            <button
-                                type="button"
-                                class="suggestion"
-                                data-question="Raconte-moi l'histoire des premiers sous-marins."
-                            >
-                                Premiers sous-marins
-                            </button>
-
-                            <button
-                                type="button"
-                                class="suggestion"
-                                data-question="Comment fonctionnait un navire à vapeur au XIXe siècle ?"
-                            >
-                                Navires à vapeur
-                            </button>
-                        </div>
-                    </div>
-                {% endif %}
-
-                <!--
-                    Génère une zone visuelle pour chaque message
-                    enregistré dans la session Django.
-                -->
-                {% for message in history %}
-                    <article
-                        class="message message--{{ message.role }}"
-                    >
-                        <div class="message__avatar">
-                            {% if message.role == "user" %}
-                                E
-                            {% else %}
-                                Q
-                            {% endif %}
-                        </div>
-
-                        <div class="message__content">
-                            <div class="message__author">
-                                {% if message.role == "user" %}
-                                    Vous
-                                {% else %}
-                                    MyCoder
-                                {% endif %}
-                            </div>
-
-                            <div class="message__text">
-                                {{ message.content|linebreaksbr }}
-                            </div>
-                        </div>
-                    </article>
-                {% endfor %}
-            </section>
-
-            <!--
-                RÔLE :
-                Contient le suivi du job,
-                les erreurs et le formulaire.
-            -->
-            <div class="composer-area">
-                <!--
-                    RÔLE :
-                    Affiche l'identifiant, l'état,
-                    la position et la progression du job.
-
-                    MODIFIÉ PAR :
-                    apps/front/chat/static/chat/chat.js
-                    ::updateJobStatus()
-
-                    PIPELINE :
-                    CHAT_JOB_STATUS
-                -->
-                <div
-                    class="job-status"
-                    id="job-status"
-                    hidden
-                    role="status"
-                    aria-live="polite"
-                >
-                    <div class="job-status__header">
-                        <strong id="job-status-title">
-                            Préparation du job…
-                        </strong>
-
-                        <code id="job-status-id"></code>
-                    </div>
-
-                    <p id="job-status-message"></p>
-
-                    <div
-                        class="job-status__progress"
-                        id="job-status-progress"
-                        hidden
-                    >
-                        <div
-                            class="job-status__progress-bar"
-                            id="job-status-progress-bar"
-                        ></div>
-                    </div>
-                </div>
-
-                <!--
-                    RÔLE :
-                    Affiche une erreur de création,
-                    de suivi ou de traitement du job.
-
-                    MODIFIÉ PAR :
-                    apps/front/chat/static/chat/chat.js
-                    ::showError()
-                -->
-                <div
-                    class="error-banner"
-                    id="client-error"
-                    role="alert"
-                    hidden
-                >
-                    <strong>
-                        La génération a échoué.
-                    </strong>
-
-                    <span id="client-error-message"></span>
-                </div>
-
-                <!--
-                    RÔLE :
-                    Envoie une nouvelle question à Django.
-
-                    APPELLE :
-                    apps/front/chat/views.py::submit_job()
-
-                    INTERCEPTÉ PAR :
-                    apps/front/chat/static/chat/chat.js
-                    ::submitJob()
-
-                    PIPELINE :
-                    CHAT_JOB_CREATE
-                -->
-                <form
-                    method="post"
-                    action="{% url 'chat:submit-job' %}"
-                    class="composer"
-                    id="chat-form"
-                >
-                    {% csrf_token %}
-
-                    <div class="composer__field">
-                        <!--
-                            Champ créé par :
-                            apps/front/chat/forms.py::ChatForm
-                        -->
-                        {{ form.message }}
-
-                        <button
-                            type="submit"
-                            class="send-button"
-                            id="send-button"
-                        >
-                            <span class="send-button__label">
-                                Envoyer
-                            </span>
-
-                            <span aria-hidden="true">
-                                ↑
-                            </span>
-                        </button>
-                    </div>
-
-                    {% if form.message.errors %}
-                        <div class="field-error">
-                            {{ form.message.errors|striptags }}
-                        </div>
-                    {% endif %}
-
-                    <div class="composer__footer">
-                        <span>
-                            ⌘ + Entrée pour envoyer
-                        </span>
-
-                        <span>
-                            Django → FastAPI → RabbitMQ → Worker → Ollama
-                        </span>
-                    </div>
-                </form>
-            </div>
-        </main>
+            ⚓
+        </div>
+        
+        <div>
+            <strong class="brand__title">
+                MyCoder
+            </strong>
+            
+            <span class="brand__subtitle">
+                Assistant local
+            </span>
+        </div>
     </div>
+    
+    <!--
+    RÔLE :
+    Affiche le modèle ayant produit
+    la dernière réponse réussie.
+    
+    DONNÉE DJANGO :
+    model_name est fournie par :
+    apps/front/chat/views.py::index()
+    -->
+    <div class="status-card">
+        <div class="status-card__heading">
+            <span class="status-dot"></span>
+            
+            Modèle actif
+        </div>
+        
+        <code class="model-name">
+            {{ model_name }}
+        </code>
+    </div>
+    
+    <!--
+    RÔLE :
+    Explique le pipeline actuel de génération.
+    
+    PIPELINE :
+    Django → FastAPI → RabbitMQ → Worker → Ollama
+    -->
+    <div class="sidebar__content">
+        <p>
+            Django valide la conversation puis demande
+            à FastAPI de créer un ticket.
+        </p>
+        
+        <p>
+            FastAPI publie le ticket dans RabbitMQ.
+            Le worker traite une demande à la fois.
+        </p>
+        
+        <p>
+            Le navigateur suit l’état du ticket
+            jusqu’à la réponse finale de Qwen.
+        </p>
+    </div>
+    
+    <!--
+    RÔLE :
+    Efface l'historique et le job actif
+    conservés dans la session Django.
+    
+    APPELLE :
+    apps/front/chat/views.py::clear_chat()
+    
+    PIPELINE :
+    CHAT_CLEAR
+    -->
+    <form
+    method="post"
+    action="{% url 'chat:clear' %}"
+    class="clear-form"
+    >
+    {% csrf_token %}
+    
+    <button
+    type="submit"
+    class="secondary-button"
+    >
+    Nouvelle conversation
+</button>
+</form>
+</aside>
+
+<!--
+RÔLE :
+Contient l'en-tête, l'historique
+et le formulaire de conversation.
+-->
+<main class="main">
+    <header class="topbar">
+        <div>
+            <h1>
+                Conversation
+            </h1>
+            
+            <p>
+                Bateaux, histoire maritime et développement
+            </p>
+        </div>
+        
+        <span class="local-badge">
+            RabbitMQ actif
+        </span>
+    </header>
+    
+    <!--
+    RÔLE :
+    Affiche les messages stockés
+    dans la session Django.
+    
+    DONNÉE DJANGO :
+    history est fournie par :
+    apps/front/chat/views.py::index()
+    
+    PIPELINE :
+    CHAT_PAGE_DISPLAY
+    -->
+    <section
+    class="conversation"
+    id="conversation"
+    aria-live="polite"
+    >
+    <!--
+    Affiche l'accueil uniquement lorsque
+    l'historique est encore vide.
+    -->
+    {% if not history %}
+    <div class="welcome">
+        <div
+        class="welcome__icon"
+        aria-hidden="true"
+        >
+        ⛵
+    </div>
+    
+    <h2>
+        Bienvenue dans MyCoder
+    </h2>
+    
+    <p>
+        Chaque question devient un ticket RabbitMQ
+        traité séparément par le worker Qwen.
+    </p>
+    
+    <!--
+    UTILISÉ PAR :
+    apps/front/chat/static/chat/chat.js
+    ::bindSuggestionButtons()
+    -->
+    <div class="suggestions">
+        <button
+        type="button"
+        class="suggestion"
+        data-question="Quelle est la différence entre une frégate et une corvette ?"
+        >
+        Frégate ou corvette ?
+    </button>
+    
+    <button
+    type="button"
+    class="suggestion"
+    data-question="Raconte-moi l'histoire des premiers sous-marins."
+    >
+    Premiers sous-marins
+</button>
+
+<button
+type="button"
+class="suggestion"
+data-question="Comment fonctionnait un navire à vapeur au XIXe siècle ?"
+>
+Navires à vapeur
+</button>
+</div>
+</div>
+{% endif %}
+
+<!--
+Génère une zone visuelle pour chaque message
+enregistré dans la session Django.
+-->
+{% for message in history %}
+<article
+class="message message--{{ message.role }}"
+>
+<div class="message__avatar">
+    {% if message.role == "user" %}
+    E
+    {% else %}
+    Q
+    {% endif %}
+</div>
+
+<div class="message__content">
+    <div class="message__author">
+        {% if message.role == "user" %}
+        Vous
+        {% else %}
+        MyCoder
+        {% endif %}
+    </div>
+    
+    
+    <div class="message__text">
+        {% if message.role == "assistant" %}
+        {% comment %}
+        RÔLE :
+        Affiche les réponses de Qwen en Markdown sécurisé.
+        
+        APPELLE :
+        chat.templatetags.chat_markdown::render_markdown
+        {% endcomment %}
+        
+        {{ message.content|render_markdown }}
+        {% else %}
+        {% comment %}
+        RÔLE :
+        Affiche les messages utilisateur comme du texte brut.
+        
+        SÉCURITÉ :
+        Aucun Markdown ni HTML utilisateur n'est interprété.
+        {% endcomment %}
+        
+        {{ message.content|linebreaksbr }}
+        {% endif %}
+    </div>
+    
+    
+</article>
+{% endfor %}
+</section>
+
+<!--
+RÔLE :
+Contient le suivi du job,
+les erreurs et le formulaire.
+-->
+<div class="composer-area">
+    <!--
+    RÔLE :
+    Affiche l'identifiant, l'état,
+    la position et la progression du job.
+    
+    MODIFIÉ PAR :
+    apps/front/chat/static/chat/chat.js
+    ::updateJobStatus()
+    
+    PIPELINE :
+    CHAT_JOB_STATUS
+    -->
+    <div
+    class="job-status"
+    id="job-status"
+    hidden
+    role="status"
+    aria-live="polite"
+    >
+    <div class="job-status__header">
+        <strong id="job-status-title">
+            Préparation du job…
+        </strong>
+        
+        <code id="job-status-id"></code>
+    </div>
+    
+    <p id="job-status-message"></p>
+    
+    <div
+    class="job-status__progress"
+    id="job-status-progress"
+    hidden
+    >
+    <div
+    class="job-status__progress-bar"
+    id="job-status-progress-bar"
+    ></div>
+</div>
+</div>
+
+<!--
+RÔLE :
+Affiche une erreur de création,
+de suivi ou de traitement du job.
+
+MODIFIÉ PAR :
+apps/front/chat/static/chat/chat.js
+::showError()
+-->
+<div
+class="error-banner"
+id="client-error"
+role="alert"
+hidden
+>
+<strong>
+    La génération a échoué.
+</strong>
+
+<span id="client-error-message"></span>
+</div>
+
+<!--
+RÔLE :
+Envoie une nouvelle question à Django.
+
+APPELLE :
+apps/front/chat/views.py::submit_job()
+
+INTERCEPTÉ PAR :
+apps/front/chat/static/chat/chat.js
+::submitJob()
+
+PIPELINE :
+CHAT_JOB_CREATE
+-->
+<form
+method="post"
+action="{% url 'chat:submit-job' %}"
+class="composer"
+id="chat-form"
+>
+{% csrf_token %}
+
+<div class="composer__field">
+    <!--
+    Champ créé par :
+    apps/front/chat/forms.py::ChatForm
+    -->
+    {{ form.message }}
+    
+    <button
+    type="submit"
+    class="send-button"
+    id="send-button"
+    >
+    <span class="send-button__label">
+        Envoyer
+    </span>
+    
+    <span aria-hidden="true">
+        ↑
+    </span>
+</button>
+</div>
+
+{% if form.message.errors %}
+<div class="field-error">
+    {{ form.message.errors|striptags }}
+</div>
+{% endif %}
+
+<div class="composer__footer">
+    <span>
+        ⌘ + Entrée pour envoyer
+    </span>
+    
+    <span>
+        Django → FastAPI → RabbitMQ → Worker → Ollama
+    </span>
+</div>
+</form>
+</div>
+</main>
+</div>
 </body>
 </html>

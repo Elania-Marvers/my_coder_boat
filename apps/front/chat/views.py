@@ -681,7 +681,21 @@ def job_status(
             )
 
         except ValueError as exc:
+            # Le résultat completed est définitif mais inutilisable.
+            #
+            # Le job ne doit donc plus être considéré comme actif,
+            # faute de quoi le navigateur recommencerait à interroger
+            # continuellement le même résultat invalide.
             _clear_active_job(request)
+
+            # IMPORTANT :
+            # Django n'enregistre pas automatiquement les modifications
+            # de session lorsqu'une vue retourne une réponse HTTP 5xx.
+            #
+            # Comme cette branche retourne HTTP 502, la suppression
+            # du job actif doit être persistée explicitement avant
+            # de construire la réponse d'erreur.
+            request.session.save()
 
             return JsonResponse(
                 {

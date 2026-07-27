@@ -376,6 +376,223 @@ button {
     font-weight: 700;
 }
 
+/*
+ * RÔLE :
+ * Met en forme le Markdown produit par Qwen.
+ *
+ * Ces règles concernent uniquement les réponses assistant.
+ * Les messages utilisateur conservent leur affichage simple.
+ *
+ * ÉLÉMENTS PRIS EN CHARGE :
+ * - paragraphes ;
+ * - titres ;
+ * - listes ;
+ * - citations ;
+ * - code en ligne ;
+ * - blocs de code ;
+ * - tableaux ;
+ * - liens ;
+ * - séparateurs.
+ */
+
+
+/* Empêche un bloc de code ou un tableau
+   d'élargir toute la grille de conversation. */
+.message--assistant .message__text {
+    min-width: 0;
+}
+
+
+/* Retire les marges inutiles au début
+   et à la fin d'une réponse. */
+.message--assistant .message__text > :first-child {
+    margin-top: 0;
+}
+
+.message--assistant .message__text > :last-child {
+    margin-bottom: 0;
+}
+
+
+/* Sépare naturellement les paragraphes. */
+.message--assistant .message__text p {
+    margin: 0 0 1em;
+}
+
+
+/* Hiérarchie visuelle des titres Markdown. */
+.message--assistant .message__text h1,
+.message--assistant .message__text h2,
+.message--assistant .message__text h3,
+.message--assistant .message__text h4 {
+    margin: 1.45em 0 0.65em;
+
+    color: var(--text);
+
+    line-height: 1.3;
+    letter-spacing: -0.02em;
+}
+
+.message--assistant .message__text h1 {
+    font-size: 1.55em;
+}
+
+.message--assistant .message__text h2 {
+    font-size: 1.35em;
+}
+
+.message--assistant .message__text h3 {
+    font-size: 1.17em;
+}
+
+.message--assistant .message__text h4 {
+    font-size: 1em;
+}
+
+
+/* Mise en page des listes à puces
+   et des listes numérotées. */
+.message--assistant .message__text ul,
+.message--assistant .message__text ol {
+    margin: 0.8em 0 1em;
+    padding-left: 1.65em;
+}
+
+.message--assistant .message__text li {
+    padding-left: 0.2em;
+}
+
+.message--assistant .message__text li + li {
+    margin-top: 0.42em;
+}
+
+.message--assistant .message__text li > p {
+    margin: 0.35em 0;
+}
+
+
+/* Citation Markdown commençant par >. */
+.message--assistant .message__text blockquote {
+    margin: 1em 0;
+    padding: 0.15em 0 0.15em 1em;
+
+    border-left: 3px solid var(--accent);
+
+    color: var(--text-soft);
+}
+
+
+/* Police partagée par le code en ligne
+   et les blocs de code. */
+.message--assistant .message__text code {
+    font-family:
+        "SFMono-Regular",
+        Consolas,
+        "Liberation Mono",
+        Menlo,
+        monospace;
+}
+
+
+/* Code court présent au milieu d'une phrase. */
+.message--assistant .message__text :not(pre) > code {
+    padding: 0.16em 0.42em;
+
+    border: 1px solid var(--border);
+    border-radius: 6px;
+
+    background: var(--surface-soft);
+    color: #b9d8ff;
+
+    font-size: 0.9em;
+}
+
+
+/* Bloc produit avec trois accents graves Markdown. */
+.message--assistant .message__text pre {
+    overflow-x: auto;
+
+    max-width: 100%;
+    margin: 1em 0;
+    padding: 16px;
+
+    border: 1px solid var(--border);
+    border-radius: 12px;
+
+    background: #0b0f17;
+
+    line-height: 1.6;
+    tab-size: 4;
+}
+
+
+/* Le conteneur pre fournit déjà
+   le fond et les espacements. */
+.message--assistant .message__text pre code {
+    padding: 0;
+
+    border: 0;
+    background: transparent;
+    color: #d8e6f7;
+
+    font-size: 13px;
+    white-space: pre;
+}
+
+/* Tableau Markdown. */
+.message--assistant .message__text table {
+    width: 100%;
+    margin: 1em 0;
+
+    border-collapse: collapse;
+
+    font-size: 0.92em;
+}
+
+.message--assistant .message__text th,
+.message--assistant .message__text td {
+    padding: 10px 12px;
+
+    border: 1px solid var(--border);
+
+    text-align: left;
+    vertical-align: top;
+    overflow-wrap: anywhere;
+}
+
+.message--assistant .message__text th {
+    background: var(--surface-soft);
+    color: var(--text);
+
+    font-weight: 700;
+}
+
+.message--assistant .message__text td {
+    background: rgba(255, 255, 255, 0.015);
+}
+
+
+/* Liens explicitement écrits en Markdown. */
+.message--assistant .message__text a {
+    color: var(--accent);
+
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
+}
+
+.message--assistant .message__text a:hover {
+    text-decoration-thickness: 2px;
+}
+
+
+/* Séparateur Markdown écrit avec --- ou ***. */
+.message--assistant .message__text hr {
+    margin: 1.5em 0;
+
+    border: 0;
+    border-top: 1px solid var(--border);
+}
+
 .message__text {
     color: var(--text);
     font-size: 15px;
